@@ -1,0 +1,11 @@
+# GitHub Linguist: keep the repository language breakdown aligned with the
+# physical-design implementation stack.
+*.tcl linguist-language=Tcl
+*.ps1 linguist-language=PowerShell
+*.sh linguist-language=Shell
+*.sdc linguist-language=Tcl
+*.v linguist-language=Verilog
+
+# Documentation and evidence should not affect the language bar.
+*.md linguist-documentation
+*.svg linguist-vendored

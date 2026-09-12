@@ -1,0 +1,36 @@
+# Python support files
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.env
+
+# OpenROAD / EDA generated artifacts
+*.odb
+*.def
+*.lef
+*.lib
+*.vg
+*.spef
+*.sdf
+*.rpt
+*.log
+*.guide
+*.gr
+*.gds
+*.oas
+
+# Keep hand-written RTL (*.v) trackable.
+# Generated Verilog is written under reports/ or data/processed/ and is ignored
+# by the directory rules below.
+
+# Generated flow data
+/data/raw/
+/data/processed/
+/reports/
+/experiments/runs/
+
+# Docker / local tooling
+*.tar
+*.tar.gz
+.DS_Store

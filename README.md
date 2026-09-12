@@ -190,25 +190,28 @@ The launcher uses the OpenROAD/ORFS Docker image and executes `flow/run_flow.tcl
 
 The image can be overridden with `OPENROAD_IMAGE` if required.
 
-## Tool stack
+## Languages & Tool Stack
 
-### Primary implementation
+### Primary implementation languages and formats
 
-- **OpenROAD** — physical implementation, ECO, placement, routing and physical checks
-- **OpenSTA** — static timing analysis and signoff
-- **Tcl** — primary flow/ECO language
-- **SDC** — timing constraints
+- **Tcl** — primary physical-design flow and ECO language
 - **Verilog** — RTL/netlist representation
+- **SDC** — timing constraints, clocks and I/O timing definitions
+
+### Physical-design tools
+
+- **OpenROAD** — physical implementation, ECO, placement, CTS, routing and physical checks
+- **OpenSTA** — static timing analysis and signoff
 
 ### Environment automation
 
-- **Bash** — Linux launcher
-- **PowerShell** — Windows launcher
-- **Docker** — reproducible OpenROAD environment
+- **Bash** — Linux flow launcher and automation
+- **PowerShell** — Windows flow launcher and automation
+- **Docker** — reproducible OpenROAD/OpenSTA environment
 
-### Optional supporting analysis
+### Supporting analysis
 
-Python can be used for experiment aggregation, report parsing, ML experiments and offline analysis. It is deliberately **not** presented as the core PD implementation language.
+- **Python** — optional report parsing, experiment aggregation, ML experiments and offline analysis; it is deliberately **not** the core PD implementation language.
 
 ## Important engineering rule
 

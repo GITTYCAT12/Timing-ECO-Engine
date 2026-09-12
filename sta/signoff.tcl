@@ -3,7 +3,7 @@
 source [file join [file dirname [info script]] .. flow config.tcl]
 
 proc run_signoff {} {
-    puts "\n[INFO] Running post-ECO OpenSTA signoff..."
+    puts "\n\[INFO\] Running post-ECO OpenSTA signoff..."
 
     report_checks -path_delay max -fields {slew cap input_pin} \
         -path_group clk -endpoint_path_count 50 \
@@ -22,6 +22,6 @@ proc run_signoff {} {
     # is required before treating a timing improvement as an accepted ECO.
     check_drc -report_file "$::POST_ECO_DIR/drc.rpt"
 
-    puts "[INFO] Post-ECO reports written to $::POST_ECO_DIR"
-    puts "[INFO] Compare baseline/ and post_eco/ WNS, TNS, data hold and DRC."
+    puts "\[INFO\] Post-ECO reports written to $::POST_ECO_DIR"
+    puts "\[INFO\] Compare baseline/ and post_eco/ WNS, TNS, data hold and DRC."
 }

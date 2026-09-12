@@ -5,7 +5,7 @@
 source [file join [file dirname [info script]] config.tcl]
 
 proc run_baseline_sta {} {
-    puts "\n[INFO] Loading routed baseline database..."
+    puts "\n\[INFO\] Loading routed baseline database..."
 
     read_liberty $::LIBERTY
     read_lef -tech $::TECH_LEF
@@ -29,5 +29,5 @@ proc run_baseline_sta {} {
         -format full_clock_expanded \
         -file "$::BASELINE_DIR/hold.rpt"
 
-    puts "[INFO] Baseline reports written to $::BASELINE_DIR"
+    puts "\[INFO\] Baseline reports written to $::BASELINE_DIR"
 }

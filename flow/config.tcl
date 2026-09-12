@@ -1,6 +1,7 @@
 # Central flow configuration for the OpenROAD Tcl implementation.
 
-set ::ECO_ROOT [file normalize [file join [pwd] ..]]
+set ::FLOW_DIR [file dirname [file normalize [info script]]]
+set ::ECO_ROOT [file normalize [file join $::FLOW_DIR ..]]
 
 set ::LIB_ROOT "/OpenROAD-flow-scripts/flow/platforms/nangate45"
 set ::LIBERTY  "$::LIB_ROOT/lib/NangateOpenCellLibrary_typical.lib"

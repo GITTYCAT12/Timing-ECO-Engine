@@ -18,7 +18,7 @@ proc eco_insert_buffer {driver_pin buffer_cell buffer_name} {
         error "No net found for ECO target pin: $driver_pin"
     }
 
-    puts "[ECO] Buffer insertion: $driver_pin -> $buffer_cell"
+    puts "\[ECO\] Buffer insertion: $driver_pin -> $buffer_cell"
     puts "      Net: $net"
 
     # OpenROAD's insert_buffer command can operate on the complete target net.
@@ -33,12 +33,12 @@ proc eco_resize_cell {instance target_cell} {
         error "ECO target instance not found: $instance"
     }
 
-    puts "[ECO] Cell resize: $instance -> $target_cell"
+    puts "\[ECO\] Cell resize: $instance -> $target_cell"
     replace_cell $instance $target_cell
 }
 
 proc run_targeted_eco {} {
-    puts "\n[INFO] Applying targeted timing ECO actions..."
+    puts "\n\[INFO\] Applying targeted timing ECO actions..."
 
     # Candidate 1: high-fanout sequential driver.
     # Fanout/cap/slew fingerprint from the baseline identified _6529_/Q as a
@@ -68,5 +68,5 @@ proc run_targeted_eco {} {
     write_verilog "$::POST_ECO_DIR/${::DESIGN_NAME}_post_eco.v"
     write_db "$::POST_ECO_DIR/${::DESIGN_NAME}_post_eco.odb"
 
-    puts "[INFO] ECO implementation and routing completed."
+    puts "\[INFO\] ECO implementation and routing completed."
 }
