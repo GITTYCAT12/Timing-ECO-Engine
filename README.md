@@ -1,28 +1,149 @@
 # Timing-ECO-Engine
 
-An explainable post-route timing ECO workflow built around OpenSTA/OpenROAD. The engine turns timing evidence into ranked ECO candidates, generates implementation actions, and validates the result with post-ECO timing checks.
+An explainable **post-route timing ECO workflow built as a physical-design-first OpenROAD/OpenSTA flow**.
+
+The project takes timing evidence, identifies high-impact timing bottlenecks, applies targeted ECO actions, re-legalizes and re-routes the design, and performs before/after signoff checks.
+
+> **Design principle:** Tcl/OpenROAD/OpenSTA are the implementation layer. Python is optional supporting analysis, not the physical-design engine.
+
+## Why this is Tcl-first
+
+A physical-design engineer normally reasons in terms of STA paths, slack, slew, capacitance, fanout, cell drive strength, placement legalization, incremental routing, parasitic estimation, setup/hold signoff, DRC closure and ECO trade-offs.
+
+Those operations now live visibly in the repository as OpenROAD Tcl flow stages rather than being hidden behind a Python wrapper.
+
+```text
+flow/
+├── config.tcl          # technology, design and report configuration
+├── baseline_sta.tcl    # routed-design loading + baseline STA
+└── run_flow.tcl        # physical-design flow entry point
+
+eco/
+└── apply_eco.tcl       # targeted buffer insertion + cell resize + reroute
+
+sta/
+└── signoff.tcl         # post-ECO STA, hold and DRC evidence
+
+scripts/
+├── run_flow.sh         # Linux/Docker launcher
+└── run_windows.ps1     # Windows/Docker launcher
+```
+
+OpenROAD is designed to be driven through Tcl, and this project follows that model. The flow uses incremental routing and routed-topology parasitic estimation after ECO changes.
+
+## End-to-end PD flow
+
+```text
+                 Routed Design
+                      │
+                      ▼
+                OpenSTA / STA
+                      │
+          ┌───────────┴───────────┐
+          │                       │
+     slack / slew            cap / fanout
+          │                       │
+          └───────────┬───────────┘
+                      ▼
+              Violation analysis
+                      │
+                      ▼
+                ECO candidates
+                 /          \
+                /            \
+       Buffer insertion    Cell resize
+                \            /
+                 \          /
+                  ▼        ▼
+                  OpenROAD ECO
+                       │
+                       ▼
+              Detailed placement
+                       │
+                       ▼
+             Incremental global route
+                       │
+                       ▼
+                Detailed routing
+                       │
+                       ▼
+            Routed parasitic estimate
+                       │
+                       ▼
+                OpenSTA signoff
+                  /          \
+                 /            \
+              setup          hold
+                 \            /
+                  \          /
+                   ▼        ▼
+                    ECO decision
+               ACCEPT / REJECT
+```
+
+## Current ECO implementation
+
+The repository uses the OpenROAD commands available in the development Docker image.
+
+### Targeted buffer insertion
+
+The engine does **not** turn a DFF or logic cell into a buffer. A high-fanout driver is handled by inserting a real buffer on its driven net:
+
+```tcl
+set driver [get_pins "_6529_/Q"]
+set net [get_nets -of_objects $driver]
+
+insert_buffer \
+    -buffer_cell BUF_X4 \
+    -net $net \
+    -buffer_name ECO_BUF_6529
+```
+
+This is deliberately different from the earlier incorrect DFF-to-buffer transformation. The current flow uses OpenROAD's `insert_buffer` interface exposed by the development image.
+
+### Cell upsizing
+
+Combinational cells can be resized independently:
+
+```tcl
+replace_cell _5084_ NOR2_X2
+```
+
+Sequential cells and clock cells are not treated as generic combinational resize candidates.
+
+### Physical implementation after ECO
+
+```tcl
+detailed_placement
+global_route -start_incremental
+global_route -end_incremental
+detailed_route
+estimate_parasitics -global_routing
+```
+
+Detailed placement is used to re-legalize the design after incremental changes such as resizing and buffer insertion.
 
 ## Development evidence
 
-This repository intentionally keeps a **transparent development evidence board** derived from the six terminal/report screenshots supplied during development. It makes the cut-to-cut flow understandable even to someone who is not deeply familiar with physical design.
+This repository keeps a **transparent development evidence board** derived from the six terminal/report screenshots supplied during development. It makes the cut-to-cut flow understandable even to someone who is not deeply familiar with physical design.
 
 ![Timing ECO development evidence](docs/evidence/timing-eco-development-evidence.svg)
 
-### 1. ECO candidate generation — what the first screenshot says
+### 1. ECO candidate generation
 
-The engine produced a ranked list of possible ECO actions. `_6529_` and `_3280_` were identified as high-impact fanout-related targets, while `_5084_`, `_5317_`, and `_5323_` were proposed for cell upsizing. The important point is that the tool does not simply say “timing is bad”; it points to concrete implementation targets and gives an estimated timing benefit and score.
+The engine produced a ranked list of possible ECO actions. `_6529_` and `_3280_` were identified as high-impact fanout-related targets, while `_5084_`, `_5317_`, and `_5323_` were proposed for cell upsizing.
 
-**For a non-VLSI reader:** this is the “what should I change?” stage. The savings shown here are **estimates**, not measured results.
+**Simple meaning:** this is the “what should I change?” stage. The savings shown here are estimates, not measured results.
 
-### 2. Baseline timing — what the second screenshot says
+### 2. Baseline timing
 
-The starting reports show **WNS = -1.66 ns** and **TNS = -33.81 ns**.
+The development baseline showed **WNS = -1.66 ns** and **TNS = -33.81 ns**.
 
-**In simple terms:** the design starts with setup-timing failures. WNS is the worst timing margin of the design; TNS is the total accumulated negative setup slack. These numbers establish the “before” state against which the ECO is judged.
+**Simple meaning:** the design starts with setup-timing failures. WNS is the worst timing margin; TNS is the accumulated negative setup slack.
 
-### 3. Closed-loop validation — what the third screenshot says
+### 3. Closed-loop validation
 
-This is the most important cut-to-cut evidence. The reported before/after comparison is:
+The development evidence showed:
 
 | Metric | Baseline | Post-ECO | Change |
 |---|---:|---:|---:|
@@ -31,75 +152,87 @@ This is the most important cut-to-cut evidence. The reported before/after compar
 | Setup-violating paths | 50 | 0 | 50 resolved |
 | Worst data-hold slack | +0.040 ns | +0.040 ns | no change |
 
-**For a non-VLSI reader:** this is the “did the physical implementation actually get better?” stage. The screenshot shows the ECO improving setup timing while the reported normal data-path hold slack stays positive.
+The screenshot also contains a negative recovery/removal value. That is an asynchronous timing check and is **not the same as a data-path hold violation**. The signoff flow reports these checks separately.
 
-The screenshot also contains a negative **recovery/removal** value. That is an asynchronous timing check and is **not the same as a data-path hold violation**. The project therefore reports it separately instead of incorrectly calling it a hold failure.
+### 4. Strategy comparison
 
-### 4. Strategy comparison — what the fourth screenshot says
+Four ECO-selection strategies were exercised over four trials each: `Greedy_WorstSlack`, `RuleBased_Heuristic`, `ECO_Copilot_Balanced`, and `ECO_Copilot_HoldAware`.
 
-Four ECO-selection strategies were exercised over four trials each: `Greedy_WorstSlack`, `RuleBased_Heuristic`, `ECO_Copilot_Balanced`, and `ECO_Copilot_HoldAware`. The table reports the best observed WNS/TNS improvement, post-ECO hold value, and number of accepted trials.
+The values were similar for this benchmark. They are retained as experiment evidence, not presented as a universal claim.
 
-The values are similar across the strategies in this particular benchmark. That result is intentionally shown rather than hidden: it is evidence from this experiment, **not a claim that the strategies are universally equivalent**.
+### 5. Regression tests
 
-### 5. Automated regression tests — what the fifth screenshot says
+The development test run reported **4 tests passed**. The tests protect implementation correctness around high-fanout identification, buffer-vs-resize semantics, and separation of data hold from asynchronous recovery/removal.
 
-The command `python -m unittest discover tests -v` reports **4 tests passed / 4 tests passed overall**.
+### 6. ML scoring
 
-The tests protect implementation correctness, including preservation of the high-fanout driver information, keeping buffer insertion separate from cell replacement, and preventing asynchronous recovery/removal checks from being mistaken for normal data hold.
+The development evidence reports a Random Forest trained from **16 independent closed-loop trials** with a **12/4 train/test split**.
 
-**Why this matters:** a timing tool should not be trusted only because it produced a better number. The tests help catch mistakes in the reasoning and implementation around that number.
+One metric in the screenshot is internally inconsistent: it displays `6.0033 ns` together with `(3.3 ps)` for the held-out MAE. Those units cannot both represent the same numeric value, so the project does **not** treat that value as a final validated ML benchmark until the calculation/reporting is rechecked.
 
-### 6. ML scoring — what the sixth screenshot says
+## Running the physical-design flow
 
-The ML scorer reports a Random Forest trained from **16 independent closed-loop trials**, using a **12/4 train/test split**. The example prediction uses a candidate with **fanout 75** and **159.54 pF** load capacitance and predicts approximately **+0.4561 ns ΔWNS**, with a reported hold-safety confidence of `1.0`.
+### Windows 11 + Docker Desktop
 
-There is one issue deliberately called out in the evidence: the screenshot displays `6.0033 ns` together with `(3.3 ps)` for the held-out MAE. Those units cannot both describe the same numeric value. The screenshot is retained for transparency, but the smaller unit should **not** be claimed until the underlying metric calculation/reporting is rechecked.
+From the repository root:
 
-## End-to-end idea
-
-```text
-Post-route STA
-     |
-     v
-Parse timing paths + electrical characteristics
-     |
-     v
-Violation fingerprint / root-cause classification
-     |
-     v
-Generate ECO candidates
-     |
-     v
-Rank by expected timing benefit + physical risk
-     |
-     v
-Apply targeted ECO
-     |
-     v
-Re-place / re-route / re-estimate parasitics
-     |
-     v
-Run post-ECO STA + hold/DRC checks
-     |
-     v
-Accept / reject + record the experiment
+```powershell
+.\scripts\run_windows.ps1
 ```
 
-The goal is not to replace the physical-design tool. The goal is to make the engineer's ECO decision process explicit, inspectable, and repeatable.
+### Linux
 
-## Scope
+```bash
+./scripts/run_flow.sh
+```
 
-Current focus: setup-timing ECO analysis, targeted buffer/rebuffer concepts, cell upsizing, closed-loop validation, experiment comparison, and optional ML-assisted scoring.
+The launcher uses the OpenROAD/ORFS Docker image and executes `flow/run_flow.tcl`.
 
-## Tooling
+The image can be overridden with `OPENROAD_IMAGE` if required.
 
-- OpenROAD / OpenSTA
-- Python
-- Tcl
-- Verilog
-- Docker
-- Linux
+## Tool stack
+
+### Primary implementation
+
+- **OpenROAD** — physical implementation, ECO, placement, routing and physical checks
+- **OpenSTA** — static timing analysis and signoff
+- **Tcl** — primary flow/ECO language
+- **SDC** — timing constraints
+- **Verilog** — RTL/netlist representation
+
+### Environment automation
+
+- **Bash** — Linux launcher
+- **PowerShell** — Windows launcher
+- **Docker** — reproducible OpenROAD environment
+
+### Optional supporting analysis
+
+Python can be used for experiment aggregation, report parsing, ML experiments and offline analysis. It is deliberately **not** presented as the core PD implementation language.
+
+## Important engineering rule
+
+A timing improvement is not accepted merely because WNS improves.
+
+The ECO must be checked for:
+
+1. setup timing
+2. normal data-path hold
+3. asynchronous recovery/removal
+4. routing completion
+5. DRC/physical side effects
+6. reproducibility from a clean baseline
+
+The correct outcome can therefore be **“no safe ECO recommendation.”**
 
 ## Evidence policy
 
-Numbers shown in the evidence board are development evidence. A result is treated as a final benchmark claim only after the exact ECO is reproduced from a clean baseline and checked for setup, data hold, asynchronous recovery/removal, routing, and design-rule side effects.
+Numbers shown in the development evidence board are development evidence. A result becomes a final benchmark claim only after the exact ECO is reproduced from a clean baseline and checked for setup, data hold, asynchronous recovery/removal, routing, and design-rule side effects.
+
+## Project status
+
+The repository is being refactored toward a **Tcl/OpenROAD-first physical-design implementation** while preserving the existing analysis and closed-loop methodology.
+
+The objective is not to replace OpenROAD's timing-repair engines. It is to make the engineer's ECO reasoning explicit:
+
+**identify → diagnose → select targeted ECO → implement → re-route → sign off → accept/reject**
