@@ -9,6 +9,15 @@ proc require_file {label path} {
     if {![file exists $path]} {
         error "Missing $label: $path"
     }
+    if {![file isfile $path]} {
+        error "$label is not a regular file: $path"
+    }
+    if {![file readable $path]} {
+        error "$label is not readable: $path"
+    }
+    if {[file size $path] == 0} {
+        error "$label is empty: $path"
+    }
     puts "[INFO] Found $label: $path"
 }
 
