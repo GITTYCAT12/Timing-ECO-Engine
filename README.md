@@ -239,3 +239,11 @@ The repository is being refactored toward a **Tcl/OpenROAD-first physical-design
 The objective is not to replace OpenROAD's timing-repair engines. It is to make the engineer's ECO reasoning explicit:
 
 **identify → diagnose → select targeted ECO → implement → re-route → sign off → accept/reject**
+
+## Engineering guides
+
+Use these guides to keep ECO selection and validation consistent across experiments:
+
+- [ECO candidate selection](docs/eco-candidate-selection.md) — map timing-path evidence to candidate actions and document trade-offs.
+- [Post-ECO signoff gates](docs/post-eco-signoff-gates.md) — evaluate setup, hold, electrical, physical and reproducibility evidence together.
+- [Reproducible ECO experiment checklist](docs/reproducible-eco-experiment.md) — record inputs, tool versions, logs and baseline-to-candidate metrics.
