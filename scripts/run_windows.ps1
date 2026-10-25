@@ -3,6 +3,17 @@ $ErrorActionPreference = "Stop"
 $Image = if ($env:OPENROAD_IMAGE) { $env:OPENROAD_IMAGE } else { "openroad/orfs:latest" }
 $Root = (Resolve-Path (Join-Path $PSScriptRoot "..")).Path
 
+if (-not (Get-Command docker -ErrorAction SilentlyContinue)) {
+    [Console]::Error.WriteLine("ERROR: Docker was not found in PATH. Start Docker Desktop or install Docker Engine.")
+    exit 127
+}
+
+& docker info 1>$null 2>$null
+if ($LASTEXITCODE -ne 0) {
+    [Console]::Error.WriteLine("ERROR: Docker is installed but the daemon is not reachable. Start Docker and retry.")
+    exit 1
+}
+
 Write-Host "==============================================================="
 Write-Host " Timing-ECO-Engine | Windows -> Docker -> OpenROAD Tcl"
 Write-Host "==============================================================="
