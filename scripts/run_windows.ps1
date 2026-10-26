@@ -2,6 +2,13 @@ $ErrorActionPreference = "Stop"
 
 $Image = if ($env:OPENROAD_IMAGE) { $env:OPENROAD_IMAGE } else { "openroad/orfs:latest" }
 $Root = (Resolve-Path (Join-Path $PSScriptRoot "..")).Path
+$FlowScript = Join-Path $Root "flow/run_flow.tcl"
+
+if (-not (Test-Path -LiteralPath $FlowScript -PathType Leaf)) {
+    [Console]::Error.WriteLine("ERROR: OpenROAD flow script was not found: $FlowScript")
+    [Console]::Error.WriteLine("Check that the repository is complete and flow/run_flow.tcl exists.")
+    exit 2
+}
 
 if (-not (Get-Command docker -ErrorAction SilentlyContinue)) {
     [Console]::Error.WriteLine("ERROR: Docker was not found in PATH. Start Docker Desktop or install Docker Engine.")
