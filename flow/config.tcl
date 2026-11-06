@@ -30,9 +30,25 @@ if {[info exists ::env(ECO_SDC)]} {
     set ::SDC "$::ECO_ROOT/benchmarks/alu32.sdc"
 }
 
-set ::LIBERTY  "$::LIB_ROOT/lib/NangateOpenCellLibrary_typical.lib"
-set ::TECH_LEF "$::LIB_ROOT/lef/NangateOpenCellLibrary.tech.lef"
-set ::CELL_LEF "$::LIB_ROOT/lef/NangateOpenCellLibrary.macro.lef"
+# Permit explicit library/LEF overrides for platforms whose files do not
+# follow the Nangate45 directory and naming convention.
+if {[info exists ::env(ECO_LIBERTY)]} {
+    set ::LIBERTY $::env(ECO_LIBERTY)
+} else {
+    set ::LIBERTY "$::LIB_ROOT/lib/NangateOpenCellLibrary_typical.lib"
+}
+
+if {[info exists ::env(ECO_TECH_LEF)]} {
+    set ::TECH_LEF $::env(ECO_TECH_LEF)
+} else {
+    set ::TECH_LEF "$::LIB_ROOT/lef/NangateOpenCellLibrary.tech.lef"
+}
+
+if {[info exists ::env(ECO_CELL_LEF)]} {
+    set ::CELL_LEF $::env(ECO_CELL_LEF)
+} else {
+    set ::CELL_LEF "$::LIB_ROOT/lef/NangateOpenCellLibrary.macro.lef"
+}
 
 set ::REPORT_DIR "$::ECO_ROOT/reports"
 set ::BASELINE_DIR "$::REPORT_DIR/baseline"
