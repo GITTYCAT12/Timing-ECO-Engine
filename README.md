@@ -242,6 +242,8 @@ The objective is not to replace OpenROAD's timing-repair engines. It is to make 
 
 ## Engineering guides
 
+- [Flow configuration](docs/flow-configuration.md) — configure design inputs, Liberty/LEF files and Docker image without editing Tcl source.
+
 Use these guides to keep ECO selection and validation consistent across experiments:
 
 - [ECO candidate selection](docs/eco-candidate-selection.md) — map timing-path evidence to candidate actions and document trade-offs.
