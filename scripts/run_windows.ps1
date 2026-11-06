@@ -30,6 +30,8 @@ Write-Host "Image:     $Image"
 $cmd = 'export PATH=/OpenROAD-flow-scripts/tools/install/OpenROAD/bin:/OpenROAD-flow-scripts/tools/install/yosys/bin:/usr/local/bin:/usr/bin:$PATH && openroad -exit /workspace/flow/run_flow.tcl'
 
 docker run --rm `
+  -e ECO_LIB_ROOT -e ECO_DESIGN_NAME -e ECO_ROUTE_DEF -e ECO_SDC `
+  -e ECO_LIBERTY -e ECO_TECH_LEF -e ECO_CELL_LEF `
   -v "${Root}:/workspace" `
   -w /workspace `
   --entrypoint bash `
