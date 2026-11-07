@@ -1,6 +1,6 @@
 # Flow Configuration
 
-The flow defaults to the repository's Nangate45 `alu32` development setup. You can point it at another mounted design and technology without editing the Tcl implementation files by setting environment variables before launching the flow.
+The flow defaults to the repository's Nangate45 `alu32` development setup. You can point its input paths and fixed ECO actions at another mounted design and technology by setting environment variables before launching it. The recipe still performs two buffer insertions and one cell resize; it does not discover or rank candidates automatically.
 
 ## Supported variables
 
@@ -14,8 +14,18 @@ The flow defaults to the repository's Nangate45 `alu32` development setup. You c
 | `ECO_LIBERTY` | Explicit Liberty file path | Nangate45 typical Liberty under `ECO_LIB_ROOT` |
 | `ECO_TECH_LEF` | Explicit technology LEF path | Nangate45 technology LEF under `ECO_LIB_ROOT` |
 | `ECO_CELL_LEF` | Explicit cell/macro LEF path | Nangate45 cell LEF under `ECO_LIB_ROOT` |
+| `ECO_BUFFER_1_PIN` | Driver output pin for the first inserted buffer | `_6529_/Q` |
+| `ECO_BUFFER_1_CELL` | Library cell used for the first buffer | `BUF_X4` |
+| `ECO_BUFFER_1_NAME` | Unique instance name assigned to the first buffer | `ECO_BUF_6529` |
+| `ECO_BUFFER_2_PIN` | Driver output pin for the second inserted buffer | `_3280_/ZN` |
+| `ECO_BUFFER_2_CELL` | Library cell used for the second buffer | `BUF_X4` |
+| `ECO_BUFFER_2_NAME` | Unique instance name assigned to the second buffer | `ECO_BUF_3280` |
+| `ECO_RESIZE_INSTANCE` | Existing instance to resize | `_5084_` |
+| `ECO_RESIZE_CELL` | Target library cell for the resize | `NOR2_X2` |
 
 The three explicit technology-file variables are useful when a platform uses a different directory layout or file naming convention. If they are not set, the flow retains the existing Nangate45 defaults.
+
+The eight `ECO_BUFFER_*` and `ECO_RESIZE_*` variables map the fixed recipe to matching pins, instances and library cells in another netlist. Choose buffer and resize cells that are available in the selected Liberty/LEF set, keep inserted instance names unique, and confirm the selected targets against baseline timing reports. These overrides do not prove logical equivalence or timing improvement; run the complete post-ECO setup, hold, recovery/removal and physical checks.
 
 ## Windows PowerShell example
 

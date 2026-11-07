@@ -40,18 +40,17 @@ proc eco_resize_cell {instance target_cell} {
 proc run_targeted_eco {} {
     puts "\n\[INFO\] Applying targeted timing ECO actions..."
 
-    # Candidate 1: high-fanout sequential driver.
-    # Fanout/cap/slew fingerprint from the baseline identified _6529_/Q as a
-    # major timing bottleneck. Do NOT replace the DFF with a buffer; insert a
-    # real buffer on its driven net.
-    eco_insert_buffer "_6529_/Q" "BUF_X4" "ECO_BUF_6529"
+    # Candidate 1: buffer insertion on a configured driver output pin.
+    # The default alu32 target is a high-fanout sequential driver; for another
+    # design, select a target using baseline fanout/capacitance/slew evidence.
+    eco_insert_buffer "$::ECO_BUFFER_1_PIN" "$::ECO_BUFFER_1_CELL" "$::ECO_BUFFER_1_NAME"
 
-    # Candidate 2: high-fanout combinational driver.
-    eco_insert_buffer "_3280_/ZN" "BUF_X4" "ECO_BUF_3280"
+    # Candidate 2: buffer insertion on a second configured driver output pin.
+    eco_insert_buffer "$::ECO_BUFFER_2_PIN" "$::ECO_BUFFER_2_CELL" "$::ECO_BUFFER_2_NAME"
 
-    # Candidate 3: conservative combinational cell upsizing.
+    # Candidate 3: resize a configured instance to a compatible library cell.
     # Keep sequential and clock cells out of this transformation class.
-    eco_resize_cell "_5084_" "NOR2_X2"
+    eco_resize_cell "$::ECO_RESIZE_INSTANCE" "$::ECO_RESIZE_CELL"
 
     # Re-legalize after incremental cell/buffer changes. OpenROAD documents
     # detailed placement as the legalizer for resizing and buffer insertion.
