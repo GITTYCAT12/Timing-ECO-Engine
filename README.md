@@ -190,6 +190,16 @@ The launcher uses the OpenROAD/ORFS Docker image and executes `flow/run_flow.tcl
 
 The image can be overridden with `OPENROAD_IMAGE` if required.
 
+## Local Tcl regression checks
+
+Run the committed ECO preflight regression suite from the repository root:
+
+```bash
+tclsh tests/test_eco_preflight.tcl
+```
+
+The suite sources the production `eco/apply_eco.tcl` and stubs only the OpenROAD collection and mutation commands used by preflight. It checks valid defaults, missing pins and nets, duplicate target pins and buffer names, instance-name collisions, missing resize instances, empty identifiers, and verifies that invalid targets are rejected before buffer insertion or cell replacement. These Tcl checks do not replace a full OpenROAD implementation or timing-signoff run.
+
 ## Languages & Tool Stack
 
 ### Primary implementation languages and formats
