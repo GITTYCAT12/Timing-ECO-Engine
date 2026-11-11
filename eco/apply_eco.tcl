@@ -39,9 +39,12 @@ proc eco_resize_cell {instance target_cell} {
 
 # Validate every configured target before the first design mutation. This
 # prevents a bad second/third target from leaving a partially applied ECO.
-proc eco_validate_buffer_target {driver_pin buffer_name} {
+proc eco_validate_buffer_target {driver_pin buffer_cell buffer_name} {
     if {$driver_pin eq ""} {
         error "ECO buffer target pin must not be empty"
+    }
+    if {$buffer_cell eq ""} {
+        error "ECO buffer library cell must not be empty"
     }
     if {$buffer_name eq ""} {
         error "ECO buffer instance name must not be empty"
@@ -70,9 +73,12 @@ proc eco_validate_targets {} {
         error "ECO buffer instance names must be unique: $::ECO_BUFFER_1_NAME"
     }
 
-    eco_validate_buffer_target $::ECO_BUFFER_1_PIN $::ECO_BUFFER_1_NAME
-    eco_validate_buffer_target $::ECO_BUFFER_2_PIN $::ECO_BUFFER_2_NAME
+    eco_validate_buffer_target $::ECO_BUFFER_1_PIN $::ECO_BUFFER_1_CELL $::ECO_BUFFER_1_NAME
+    eco_validate_buffer_target $::ECO_BUFFER_2_PIN $::ECO_BUFFER_2_CELL $::ECO_BUFFER_2_NAME
 
+    if {$::ECO_RESIZE_CELL eq ""} {
+        error "ECO resize target library cell must not be empty"
+    }
     if {$::ECO_RESIZE_INSTANCE eq ""} {
         error "ECO resize target instance must not be empty"
     }

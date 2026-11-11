@@ -132,6 +132,14 @@ set ::ECO_BUFFER_2_NAME ""
 expect_error "empty buffer instance name" "must not be empty" {eco_validate_targets}
 
 reset_state
+set ::ECO_BUFFER_1_CELL ""
+expect_error "empty buffer library cell" "ECO buffer library cell must not be empty" {eco_validate_targets}
+
+reset_state
+set ::ECO_RESIZE_CELL ""
+expect_error "empty resize library cell" "ECO resize target library cell must not be empty" {eco_validate_targets}
+
+reset_state
 dict unset ::mock_pins "_3280_/ZN"
 expect_error "run rejects invalid targets" "ECO target pin not found" {run_targeted_eco}
 if {$::mutation_count == 0} {
