@@ -33,3 +33,6 @@ jobs:
 
       - name: Run preflight regression
         run: tclsh tests/test_eco_preflight.tcl
+
+      - name: Run ECO execution regression
+        run: tclsh tests/test_eco_execution.tcl
