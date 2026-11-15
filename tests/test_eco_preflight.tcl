@@ -18,6 +18,7 @@ foreach name {
 set ::mock_pins {}
 set ::mock_nets {}
 set ::mock_cells {}
+set ::mock_lib_cells {}
 set ::mutation_count 0
 
 proc get_pins {pin_name} {
@@ -49,6 +50,13 @@ proc get_cells {cell_name} {
     return {}
 }
 
+proc get_lib_cells {cell_name} {
+    if {[dict exists $::mock_lib_cells $cell_name]} {
+        return [list $cell_name]
+    }
+    return {}
+}
+
 # Mutation stubs prove that invalid input is rejected before any design edit.
 proc insert_buffer {args} { incr ::mutation_count }
 proc replace_cell {args} { incr ::mutation_count }
@@ -70,6 +78,7 @@ proc reset_state {} {
     set ::mock_pins [dict create "_6529_/Q" 1 "_3280_/ZN" 1]
     set ::mock_nets [dict create "_6529_/Q" net_6529 "_3280_/ZN" net_3280]
     set ::mock_cells [dict create "_5084_" 1]
+    set ::mock_lib_cells [dict create BUF_X4 1 NOR2_X2 1]
     set ::mutation_count 0
 }
 
@@ -98,6 +107,14 @@ proc expect_error {name expected_fragment script} {
 
 reset_state
 expect_success "valid default targets" {eco_validate_targets}
+
+reset_state
+dict unset ::mock_lib_cells "BUF_X4"
+expect_error "unknown buffer library cell" "ECO buffer library cell not found" {eco_validate_targets}
+
+reset_state
+dict unset ::mock_lib_cells "NOR2_X2"
+expect_error "unknown resize library cell" "ECO resize target library cell not found" {eco_validate_targets}
 
 reset_state
 dict unset ::mock_pins "_3280_/ZN"
@@ -148,6 +165,17 @@ if {$::mutation_count == 0} {
 } else {
     incr ::failed
     puts "FAIL: preflight failure reached $::mutation_count mutation command(s)"
+}
+
+reset_state
+dict unset ::mock_lib_cells "NOR2_X2"
+expect_error "run rejects unknown resize cell before mutation" "ECO resize target library cell not found" {run_targeted_eco}
+if {$::mutation_count == 0} {
+    incr ::passed
+    puts "PASS: unknown library cell causes zero ECO mutations"
+} else {
+    incr ::failed
+    puts "FAIL: unknown library cell reached $::mutation_count mutation command(s)"
 }
 
 puts "\nTcl ECO preflight regression: $::passed passed, $::failed failed"

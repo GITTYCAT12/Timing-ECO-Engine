@@ -50,6 +50,10 @@ proc eco_validate_buffer_target {driver_pin buffer_cell buffer_name} {
         error "ECO buffer instance name must not be empty"
     }
 
+    if {[llength [get_lib_cells $buffer_cell]] == 0} {
+        error "ECO buffer library cell not found: $buffer_cell"
+    }
+
     set driver [get_pins $driver_pin]
     if {[llength $driver] == 0} {
         error "ECO target pin not found: $driver_pin"
@@ -81,6 +85,9 @@ proc eco_validate_targets {} {
     }
     if {$::ECO_RESIZE_INSTANCE eq ""} {
         error "ECO resize target instance must not be empty"
+    }
+    if {[llength [get_lib_cells $::ECO_RESIZE_CELL]] == 0} {
+        error "ECO resize target library cell not found: $::ECO_RESIZE_CELL"
     }
     if {[llength [get_cells $::ECO_RESIZE_INSTANCE]] == 0} {
         error "ECO resize target instance not found: $::ECO_RESIZE_INSTANCE"

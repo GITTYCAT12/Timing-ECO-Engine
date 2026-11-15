@@ -17,6 +17,7 @@ foreach name {
 set ::mock_pins [dict create "_6529_/Q" 1 "_3280_/ZN" 1]
 set ::mock_nets [dict create "_6529_/Q" "net_6529" "_3280_/ZN" "net_3280"]
 set ::mock_cells [dict create "_5084_" 1]
+set ::mock_lib_cells [dict create BUF_X4 1 NOR2_X2 1]
 set ::mutation_log {}
 set ::flow_log {}
 
@@ -44,6 +45,13 @@ proc get_nets {args} {
 
 proc get_cells {cell_name} {
     if {[dict exists $::mock_cells $cell_name]} {
+        return [list $cell_name]
+    }
+    return {}
+}
+
+proc get_lib_cells {cell_name} {
+    if {[dict exists $::mock_lib_cells $cell_name]} {
         return [list $cell_name]
     }
     return {}
@@ -132,7 +140,7 @@ set expected_flow [list \
 check_equal "legalization, incremental routing, parasitics and outputs run in order" \
     $::flow_log $expected_flow
 
-puts "\\nTcl ECO execution regression: $::passed passed, $::failed failed"
+puts "\nTcl ECO execution regression: $::passed passed, $::failed failed"
 if {$::failed != 0} {
     exit 1
 }
