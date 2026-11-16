@@ -28,8 +28,8 @@ proc eco_insert_buffer {driver_pin buffer_cell buffer_name} {
     puts "      Net: $net"
 
     # OpenROAD's insert_buffer command can operate on the complete target net.
-    insert_buffer -buffer_cell $buffer_cell \\
-        -net $net \\
+    insert_buffer -buffer_cell $buffer_cell \
+        -net $net \
         -buffer_name $buffer_name
 }
 
