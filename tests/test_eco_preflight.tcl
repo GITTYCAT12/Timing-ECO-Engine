@@ -19,9 +19,16 @@ set ::mock_pins {}
 set ::mock_nets {}
 set ::mock_cells {}
 set ::mock_lib_cells {}
+set ::mock_pin_results {}
+set ::mock_net_results {}
+set ::mock_cell_results {}
+set ::mock_lib_cell_results {}
 set ::mutation_count 0
 
 proc get_pins {pin_name} {
+    if {[dict exists $::mock_pin_results $pin_name]} {
+        return [dict get $::mock_pin_results $pin_name]
+    }
     if {[dict exists $::mock_pins $pin_name]} {
         return [list $pin_name]
     }
@@ -37,6 +44,9 @@ proc get_nets {args} {
         return {}
     }
     set pin_name [lindex $pins 0]
+    if {[dict exists $::mock_net_results $pin_name]} {
+        return [dict get $::mock_net_results $pin_name]
+    }
     if {[dict exists $::mock_nets $pin_name]} {
         return [list [dict get $::mock_nets $pin_name]]
     }
@@ -44,6 +54,9 @@ proc get_nets {args} {
 }
 
 proc get_cells {cell_name} {
+    if {[dict exists $::mock_cell_results $cell_name]} {
+        return [dict get $::mock_cell_results $cell_name]
+    }
     if {[dict exists $::mock_cells $cell_name]} {
         return [list $cell_name]
     }
@@ -51,6 +64,9 @@ proc get_cells {cell_name} {
 }
 
 proc get_lib_cells {cell_name} {
+    if {[dict exists $::mock_lib_cell_results $cell_name]} {
+        return [dict get $::mock_lib_cell_results $cell_name]
+    }
     if {[dict exists $::mock_lib_cells $cell_name]} {
         return [list $cell_name]
     }
@@ -79,6 +95,10 @@ proc reset_state {} {
     set ::mock_nets [dict create "_6529_/Q" net_6529 "_3280_/ZN" net_3280]
     set ::mock_cells [dict create "_5084_" 1]
     set ::mock_lib_cells [dict create BUF_X4 1 NOR2_X2 1]
+    set ::mock_pin_results {}
+    set ::mock_net_results {}
+    set ::mock_cell_results {}
+    set ::mock_lib_cell_results {}
     set ::mutation_count 0
 }
 
@@ -177,6 +197,43 @@ if {$::mutation_count == 0} {
     incr ::failed
     puts "FAIL: unknown library cell reached $::mutation_count mutation command(s)"
 }
+
+reset_state
+dict set ::mock_pin_results "_6529_/Q" [list pin_a pin_b]
+expect_error "ambiguous buffer pin selector" "exactly one pin" {eco_validate_targets}
+
+reset_state
+dict set ::mock_net_results "_6529_/Q" [list net_a net_b]
+expect_error "buffer pin resolving to multiple nets" "exactly one net" {eco_validate_targets}
+
+reset_state
+dict set ::mock_lib_cell_results "BUF_X4" [list lib_a lib_b]
+expect_error "ambiguous buffer library-cell selector" "exactly one library cell" {eco_validate_targets}
+
+reset_state
+dict set ::mock_lib_cell_results "NOR2_X2" [list lib_a lib_b]
+expect_error "ambiguous resize library-cell selector" "exactly one library cell" {eco_validate_targets}
+
+reset_state
+dict set ::mock_cell_results "_5084_" [list inst_a inst_b]
+expect_error "ambiguous resize instance selector" "exactly one instance" {eco_validate_targets}
+
+reset_state
+set ::ECO_BUFFER_1_PIN "alias_one"
+set ::ECO_BUFFER_2_PIN "alias_two"
+dict set ::mock_pin_results alias_one [list shared_pin]
+dict set ::mock_pin_results alias_two [list shared_pin]
+dict set ::mock_nets shared_pin net_shared
+expect_error "different pin patterns resolving to the same pin" "distinct driver pins" {eco_validate_targets}
+
+reset_state
+set ::ECO_BUFFER_1_PIN "alias_one"
+set ::ECO_BUFFER_2_PIN "alias_two"
+dict set ::mock_pin_results alias_one [list pin_one]
+dict set ::mock_pin_results alias_two [list pin_two]
+dict set ::mock_nets pin_one net_shared
+dict set ::mock_nets pin_two net_shared
+expect_error "two driver pins resolving to the same net" "distinct target nets" {eco_validate_targets}
 
 puts "\nTcl ECO preflight regression: $::passed passed, $::failed failed"
 if {$::failed != 0} {

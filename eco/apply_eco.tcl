@@ -12,18 +12,24 @@ proc eco_insert_buffer {driver_pin buffer_cell buffer_name} {
     if {[llength $driver] == 0} {
         error "ECO target pin not found: $driver_pin"
     }
+    if {[llength $driver] != 1} {
+        error "ECO target pin must resolve to exactly one pin: $driver_pin"
+    }
 
     set net [get_nets -of_objects $driver]
     if {[llength $net] == 0} {
         error "No net found for ECO target pin: $driver_pin"
+    }
+    if {[llength $net] != 1} {
+        error "ECO target pin must resolve to exactly one net: $driver_pin"
     }
 
     puts "\[ECO\] Buffer insertion: $driver_pin -> $buffer_cell"
     puts "      Net: $net"
 
     # OpenROAD's insert_buffer command can operate on the complete target net.
-    insert_buffer -buffer_cell $buffer_cell \
-        -net $net \
+    insert_buffer -buffer_cell $buffer_cell \\
+        -net $net \\
         -buffer_name $buffer_name
 }
 
@@ -31,6 +37,17 @@ proc eco_resize_cell {instance target_cell} {
     set cell [get_cells $instance]
     if {[llength $cell] == 0} {
         error "ECO target instance not found: $instance"
+    }
+    if {[llength $cell] != 1} {
+        error "ECO resize target must resolve to exactly one instance: $instance"
+    }
+
+    set lib_cell [get_lib_cells $target_cell]
+    if {[llength $lib_cell] == 0} {
+        error "ECO resize target library cell not found: $target_cell"
+    }
+    if {[llength $lib_cell] != 1} {
+        error "ECO resize target must resolve to exactly one library cell: $target_cell"
     }
 
     puts "\[ECO\] Cell resize: $instance -> $target_cell"
@@ -50,23 +67,35 @@ proc eco_validate_buffer_target {driver_pin buffer_cell buffer_name} {
         error "ECO buffer instance name must not be empty"
     }
 
-    if {[llength [get_lib_cells $buffer_cell]] == 0} {
+    set lib_cells [get_lib_cells $buffer_cell]
+    if {[llength $lib_cells] == 0} {
         error "ECO buffer library cell not found: $buffer_cell"
+    }
+    if {[llength $lib_cells] != 1} {
+        error "ECO buffer target must resolve to exactly one library cell: $buffer_cell"
     }
 
     set driver [get_pins $driver_pin]
     if {[llength $driver] == 0} {
         error "ECO target pin not found: $driver_pin"
     }
+    if {[llength $driver] != 1} {
+        error "ECO target pin must resolve to exactly one pin: $driver_pin"
+    }
 
     set net [get_nets -of_objects $driver]
     if {[llength $net] == 0} {
         error "No net found for ECO target pin: $driver_pin"
     }
+    if {[llength $net] != 1} {
+        error "ECO target pin must resolve to exactly one net: $driver_pin"
+    }
 
     if {[llength [get_cells $buffer_name]] != 0} {
         error "ECO buffer instance name already exists: $buffer_name"
     }
+
+    return [list [lindex $driver 0] [lindex $net 0]]
 }
 
 proc eco_validate_targets {} {
@@ -77,8 +106,14 @@ proc eco_validate_targets {} {
         error "ECO buffer instance names must be unique: $::ECO_BUFFER_1_NAME"
     }
 
-    eco_validate_buffer_target $::ECO_BUFFER_1_PIN $::ECO_BUFFER_1_CELL $::ECO_BUFFER_1_NAME
-    eco_validate_buffer_target $::ECO_BUFFER_2_PIN $::ECO_BUFFER_2_CELL $::ECO_BUFFER_2_NAME
+    set buffer_target_1 [eco_validate_buffer_target $::ECO_BUFFER_1_PIN $::ECO_BUFFER_1_CELL $::ECO_BUFFER_1_NAME]
+    set buffer_target_2 [eco_validate_buffer_target $::ECO_BUFFER_2_PIN $::ECO_BUFFER_2_CELL $::ECO_BUFFER_2_NAME]
+    if {[lindex $buffer_target_1 0] eq [lindex $buffer_target_2 0]} {
+        error "ECO buffer targets must resolve to distinct driver pins"
+    }
+    if {[lindex $buffer_target_1 1] eq [lindex $buffer_target_2 1]} {
+        error "ECO buffer targets must resolve to distinct target nets"
+    }
 
     if {$::ECO_RESIZE_CELL eq ""} {
         error "ECO resize target library cell must not be empty"
@@ -86,11 +121,19 @@ proc eco_validate_targets {} {
     if {$::ECO_RESIZE_INSTANCE eq ""} {
         error "ECO resize target instance must not be empty"
     }
-    if {[llength [get_lib_cells $::ECO_RESIZE_CELL]] == 0} {
+    set resize_lib_cells [get_lib_cells $::ECO_RESIZE_CELL]
+    if {[llength $resize_lib_cells] == 0} {
         error "ECO resize target library cell not found: $::ECO_RESIZE_CELL"
     }
-    if {[llength [get_cells $::ECO_RESIZE_INSTANCE]] == 0} {
+    if {[llength $resize_lib_cells] != 1} {
+        error "ECO resize target must resolve to exactly one library cell: $::ECO_RESIZE_CELL"
+    }
+    set resize_instances [get_cells $::ECO_RESIZE_INSTANCE]
+    if {[llength $resize_instances] == 0} {
         error "ECO resize target instance not found: $::ECO_RESIZE_INSTANCE"
+    }
+    if {[llength $resize_instances] != 1} {
+        error "ECO resize target must resolve to exactly one instance: $::ECO_RESIZE_INSTANCE"
     }
 }
 
