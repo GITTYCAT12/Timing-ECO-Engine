@@ -36,3 +36,6 @@ jobs:
 
       - name: Run ECO execution regression
         run: tclsh tests/test_eco_execution.tcl
+
+      - name: Run flow configuration regression
+        run: tclsh tests/test_flow_config.tcl
