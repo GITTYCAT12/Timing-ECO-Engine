@@ -45,10 +45,22 @@ check_equal "default Liberty under library root" $::LIBERTY [file join $default_
 check_equal "default technology LEF under library root" $::TECH_LEF [file join $default_lib_root lef NangateOpenCellLibrary.tech.lef]
 check_equal "default cell LEF under library root" $::CELL_LEF [file join $default_lib_root lef NangateOpenCellLibrary.macro.lef]
 
+check_equal "default first buffer pin" $::ECO_BUFFER_1_PIN "_6529_/Q"
+check_equal "default first buffer cell" $::ECO_BUFFER_1_CELL "BUF_X4"
+check_equal "default first buffer name" $::ECO_BUFFER_1_NAME "ECO_BUF_6529"
+check_equal "default second buffer pin" $::ECO_BUFFER_2_PIN "_3280_/ZN"
+check_equal "default second buffer cell" $::ECO_BUFFER_2_CELL "BUF_X4"
+check_equal "default second buffer name" $::ECO_BUFFER_2_NAME "ECO_BUF_3280"
+check_equal "default resize instance" $::ECO_RESIZE_INSTANCE "_5084_"
+check_equal "default resize cell" $::ECO_RESIZE_CELL "NOR2_X2"
+
 # Empty exported values should behave exactly like unset values.
 foreach name {
     ECO_LIB_ROOT ECO_DESIGN_NAME ECO_ROUTE_DEF ECO_SDC
     ECO_LIBERTY ECO_TECH_LEF ECO_CELL_LEF
+    ECO_BUFFER_1_PIN ECO_BUFFER_1_CELL ECO_BUFFER_1_NAME
+    ECO_BUFFER_2_PIN ECO_BUFFER_2_CELL ECO_BUFFER_2_NAME
+    ECO_RESIZE_INSTANCE ECO_RESIZE_CELL
 } {
     set ::env($name) ""
 }
@@ -61,6 +73,14 @@ check_equal "empty SDC override falls back" $::SDC $default_sdc
 check_equal "empty Liberty override falls back" $::LIBERTY [file join $default_lib_root lib NangateOpenCellLibrary_typical.lib]
 check_equal "empty technology-LEF override falls back" $::TECH_LEF [file join $default_lib_root lef NangateOpenCellLibrary.tech.lef]
 check_equal "empty cell-LEF override falls back" $::CELL_LEF [file join $default_lib_root lef NangateOpenCellLibrary.macro.lef]
+check_equal "empty first buffer pin falls back" $::ECO_BUFFER_1_PIN "_6529_/Q"
+check_equal "empty first buffer cell falls back" $::ECO_BUFFER_1_CELL "BUF_X4"
+check_equal "empty first buffer name falls back" $::ECO_BUFFER_1_NAME "ECO_BUF_6529"
+check_equal "empty second buffer pin falls back" $::ECO_BUFFER_2_PIN "_3280_/ZN"
+check_equal "empty second buffer cell falls back" $::ECO_BUFFER_2_CELL "BUF_X4"
+check_equal "empty second buffer name falls back" $::ECO_BUFFER_2_NAME "ECO_BUF_3280"
+check_equal "empty resize instance falls back" $::ECO_RESIZE_INSTANCE "_5084_"
+check_equal "empty resize cell falls back" $::ECO_RESIZE_CELL "NOR2_X2"
 
 # Non-empty values must still override every configurable input.
 set ::env(ECO_LIB_ROOT) "/tmp/eco-custom-platform"
@@ -70,6 +90,14 @@ set ::env(ECO_SDC) "/tmp/custom.sdc"
 set ::env(ECO_LIBERTY) "/tmp/custom.lib"
 set ::env(ECO_TECH_LEF) "/tmp/custom.tech.lef"
 set ::env(ECO_CELL_LEF) "/tmp/custom.cell.lef"
+set ::env(ECO_BUFFER_1_PIN) "custom_driver_1/Q"
+set ::env(ECO_BUFFER_1_CELL) "CUSTOM_BUF_X2"
+set ::env(ECO_BUFFER_1_NAME) "CUSTOM_ECO_BUF_1"
+set ::env(ECO_BUFFER_2_PIN) "custom_driver_2/ZN"
+set ::env(ECO_BUFFER_2_CELL) "CUSTOM_BUF_X4"
+set ::env(ECO_BUFFER_2_NAME) "CUSTOM_ECO_BUF_2"
+set ::env(ECO_RESIZE_INSTANCE) "custom_resize_inst"
+set ::env(ECO_RESIZE_CELL) "CUSTOM_NOR2_X4"
 source $config_path
 
 check_equal "non-empty library-root override" $::LIB_ROOT "/tmp/eco-custom-platform"
@@ -79,6 +107,14 @@ check_equal "non-empty SDC override" $::SDC "/tmp/custom.sdc"
 check_equal "non-empty Liberty override" $::LIBERTY "/tmp/custom.lib"
 check_equal "non-empty technology-LEF override" $::TECH_LEF "/tmp/custom.tech.lef"
 check_equal "non-empty cell-LEF override" $::CELL_LEF "/tmp/custom.cell.lef"
+check_equal "non-empty first buffer pin override" $::ECO_BUFFER_1_PIN "custom_driver_1/Q"
+check_equal "non-empty first buffer cell override" $::ECO_BUFFER_1_CELL "CUSTOM_BUF_X2"
+check_equal "non-empty first buffer name override" $::ECO_BUFFER_1_NAME "CUSTOM_ECO_BUF_1"
+check_equal "non-empty second buffer pin override" $::ECO_BUFFER_2_PIN "custom_driver_2/ZN"
+check_equal "non-empty second buffer cell override" $::ECO_BUFFER_2_CELL "CUSTOM_BUF_X4"
+check_equal "non-empty second buffer name override" $::ECO_BUFFER_2_NAME "CUSTOM_ECO_BUF_2"
+check_equal "non-empty resize instance override" $::ECO_RESIZE_INSTANCE "custom_resize_inst"
+check_equal "non-empty resize cell override" $::ECO_RESIZE_CELL "CUSTOM_NOR2_X4"
 
 puts "\nTcl flow configuration regression: $::passed passed, $::failed failed"
 if {$::failed != 0} {
