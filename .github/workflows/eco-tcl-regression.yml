@@ -4,7 +4,8 @@ on:
   push:
     paths:
       - "eco/**"
-      - "flow/config.tcl"
+      - "flow/**"
+      - "sta/**"
       - "tests/**"
       - ".github/workflows/eco-tcl-regression.yml"
   pull_request:
@@ -30,6 +31,9 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install --yes tcl
+
+      - name: Run Tcl syntax regression
+        run: tclsh tests/test_tcl_syntax.tcl
 
       - name: Run preflight regression
         run: tclsh tests/test_eco_preflight.tcl
