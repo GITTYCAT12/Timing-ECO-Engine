@@ -11,7 +11,8 @@ on:
   pull_request:
     paths:
       - "eco/**"
-      - "flow/config.tcl"
+      - "flow/**"
+      - "sta/**"
       - "tests/**"
       - ".github/workflows/eco-tcl-regression.yml"
   workflow_dispatch:
